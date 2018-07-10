@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>snek</title>
+    </head>
+    <body>
+
+        <div id="score">0</div>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+    
+        <style>
+            #gameCanvas {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            #score {
+                text-align: center;
+                font-size: 140px;
+                font-family: 'Antic Slab', serif;
+            }
+        </style>
+
+    </body>
+    
+    <script>
+        const GAME_SPEED = 100;
+        const CANVAS_BORDER_COLOUR = 'black';
+        const CANVAS_BACKGROUND_COLOUR = "white";
+        const Snek_COLOUR = 'lightgreen';
+        const Snek_BORDER_COLOUR = 'darkgreen';
+        const FOOD_COLOUR = 'red';
+        const FOOD_BORDER_COLOUR = 'darkred';
+
+        let Snek = [
+          {x: 150, y: 150},
+          {x: 140, y: 150},
+          {x: 130, y: 150},
+          {x: 120, y: 150},
+          {x: 110, y: 150}
+        ]
+        let score = 0;
+        let changingDirection = false;
+        let foodX;
+        let foodY;
+        let dx = 10;
+        let dy = 0;
+
+        const gameCanvas = document.getElementById("gameCanvas");
+        const ctx = gameCanvas.getContext("2d");
+
+        main();
+
+        createFood();
+
+        document.addEventListener("keydown", changeDirection);
+
+        function main() {
+          if (didGameEnd()) return;
+          setTimeout(function onTick() {
+            changingDirection = false;
+            clearCanvas();
+            drawFood();
+            advanceSnek();
+            drawSnek();
+            main();
+          }, GAME_SPEED)
+        }
+
+        function clearCanvas() {
+          ctx.fillStyle = CANVAS_BACKGROUND_COLOUR;
+          ctx.strokestyle = CANVAS_BORDER_COLOUR;
+          ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+          ctx.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+        }
+
+        function drawFood() {
+          ctx.fillStyle = FOOD_COLOUR;
+          ctx.strokestyle = FOOD_BORDER_COLOUR;
+          ctx.fillRect(foodX, foodY, 10, 10);
+          ctx.strokeRect(foodX, foodY, 10, 10);
+        }
+
+        function advanceSnek() {
+          const head = {x: Snek[0].x + dx, y: Snek[0].y + dy};
+          Snek.unshift(head);
+          const didEatFood = Snek[0].x === foodX && Snek[0].y === foodY;
+          if (didEatFood) {
+            score += 10;
+            document.getElementById('score').innerHTML = score;
+            createFood();
+          } else {
+            Snek.pop();
+          }
+        }
+
+        function didGameEnd() {
+          for (let i = 4; i < Snek.length; i++) {
+            if (Snek[i].x === Snek[0].x && Snek[i].y === Snek[0].y) return true
+          }
+          const hitLeftWall = Snek[0].x < 0;
+          const hitRightWall = Snek[0].x > gameCanvas.width - 10;
+          const hitToptWall = Snek[0].y < 0;
+          const hitBottomWall = Snek[0].y > gameCanvas.height - 10;
+          return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall
+        }
+
+        function randomTen(min, max) {
+          return Math.round((Math.random() * (max-min) + min) / 10) * 10;
+        }
+
+        function createFood() {
+          foodX = randomTen(0, gameCanvas.width - 10);
+          foodY = randomTen(0, gameCanvas.height - 10);
+          Snek.forEach(function isFoodOnSnek(part) {
+            const foodIsoNSnek = part.x == foodX && part.y == foodY;
+            if (foodIsoNSnek) createFood();
+          });
+        }
+
+        function drawSnek() {
+          Snek.forEach(drawSnekPart)
+        }
+
+        function drawSnekPart(SnekPart) {
+          ctx.fillStyle = Snek_COLOUR;
+          ctx.strokestyle = Snek_BORDER_COLOUR;
+          ctx.fillRect(SnekPart.x, SnekPart.y, 10, 10);
+          ctx.strokeRect(SnekPart.x, SnekPart.y, 10, 10);
+        }
+        
+        function changeDirection(event) {
+          const LEFT_KEY = 37;
+          const RIGHT_KEY = 39;
+          const UP_KEY = 38;
+          const DOWN_KEY = 40;
+          if (changingDirection) return;
+          changingDirection = true;
+          
+          const keyPressed = event.keyCode;
+          const goingUp = dy === -10;
+          const goingDown = dy === 10;
+          const goingRight = dx === 10;
+          const goingLeft = dx === -10;
+          if (keyPressed === LEFT_KEY && !goingRight) {
+            dx = -10;
+            dy = 0;
+          }
+          
+          if (keyPressed === UP_KEY && !goingDown) {
+            dx = 0;
+            dy = -10;
+          }
+          
+          if (keyPressed === RIGHT_KEY && !goingLeft) {
+            dx = 10;
+            dy = 0;
+          }
+          
+          if (keyPressed === DOWN_KEY && !goingUp) {
+            dx = 0;
+            dy = 10;
+          }
+        }
+      </script>
+    </html>
